@@ -1,5 +1,7 @@
 package com.bwisa.blogapp.Fragments;
 
+import android.app.ProgressDialog;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -8,14 +10,27 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
+import com.android.volley.AuthFailureError;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
+import com.bwisa.blogapp.Constant;
 import com.bwisa.blogapp.R;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.HashMap;
+import java.util.Map;
 
 //5.1 make fragments and their layouts
 public class SignUpFragment extends Fragment {
@@ -25,6 +40,7 @@ public class SignUpFragment extends Fragment {
     private TextInputEditText txtEmail, txtPassword, txtConfirm;
     private TextView txtSignIn;
     private Button btnSignUp;
+    private ProgressDialog dialog;
 
     public SignUpFragment(){}
 
@@ -45,6 +61,8 @@ public class SignUpFragment extends Fragment {
         txtSignIn = view.findViewById(R.id.txtSignIn);
         txtEmail = view.findViewById(R.id.txtEmailSignUp);
         btnSignUp= view.findViewById(R.id.btnSignUp);
+        dialog = new ProgressDialog(getContext());
+        dialog.setCancelable(false);
 
         txtSignIn.setOnClickListener(v -> {
             //4.3 change fragments
@@ -54,7 +72,7 @@ public class SignUpFragment extends Fragment {
         //4.4 validate the fields first
         btnSignUp.setOnClickListener(v -> {
             if (validate()){
-
+                register();
             }
         });
 
@@ -118,6 +136,7 @@ public class SignUpFragment extends Fragment {
         });
     }
 
+
     //4.5 add errors
     private boolean validate(){
         if (txtEmail.getText().toString().isEmpty()){
@@ -137,4 +156,51 @@ public class SignUpFragment extends Fragment {
         }
         return true;
     }
-}
+
+    //4.6
+    private void register() {
+        dialog.setMessage("Registering");
+        dialog.show();
+        StringRequest request = new StringRequest(Request.Method.POST, Constant.REGISTER, response ->{
+            //we get response if connection is successful
+            try {
+                JSONObject object = new JSONObject(response);
+                if (object.getBoolean("success")){
+                    JSONObject user = object.getJSONObject("user");
+                    //make shared preference user
+                    SharedPreferences userPref = getActivity().getApplicationContext().getSharedPreferences("user", getContext().MODE_PRIVATE);
+                    SharedPreferences.Editor editor = userPref.edit();
+                    editor.putString("token", object.getString("token"));
+                    editor.putString("name", user.getString("name"));
+                    editor.putString("lastname", user.getString("lastname"));
+                    editor.putString("photo", user.getString("photo"));
+                    editor.apply();
+                    //if successful
+                    Toast.makeText(getContext(),"Register success", Toast.LENGTH_SHORT).show();
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            dialog.dismiss();
+        }, error -> {
+            //error displayed
+            error.printStackTrace();
+            dialog.dismiss();
+        }){
+            //add parameters
+
+            @Override
+            protected Map<String, String> getParams() throws AuthFailureError {
+                HashMap<String,String> map = new HashMap<>();
+                map.put("email", txtEmail.getText().toString().trim());
+                map.put("password", txtPassword.getText().toString());
+                return map;
+            }
+        };
+
+        // add this request to request queue
+        RequestQueue queue = Volley.newRequestQueue(getContext());
+        queue.add(request);
+    }
+    }
+
