@@ -1,6 +1,7 @@
 package com.bwisa.blogapp.Fragments;
 
 import android.app.ProgressDialog;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.Editable;
@@ -21,10 +22,14 @@ import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
-import com.bwisa.blogapp.Constant;
 import com.bwisa.blogapp.R;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
+import com.bwisa.blogapp.AuthActivity;
+import com.bwisa.blogapp.Constant;
+
+
+
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -32,12 +37,12 @@ import org.json.JSONObject;
 import java.util.HashMap;
 import java.util.Map;
 
-//5.1 make fragments and their layouts
+//4.1 make fragments and their layouts
 public class SignUpFragment extends Fragment {
     private View view;
-    //5,2 add what was on SignInFragment to SignUp
-    private TextInputLayout layoutEmail, layoutPassword, layoutConfirm;
-    private TextInputEditText txtEmail, txtPassword, txtConfirm;
+    //4.2 add what was on SignInFragment to SignUp
+    private TextInputLayout layoutEmail,layoutPassword,layoutConfirm;
+    private TextInputEditText txtEmail,txtPassword,txtConfirm;
     private TextView txtSignIn;
     private Button btnSignUp;
     private ProgressDialog dialog;
@@ -47,36 +52,37 @@ public class SignUpFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        view = inflater.inflate(R.layout.layout_sign_up,container, false);
+        view = inflater.inflate(R.layout.layout_sign_up,container,false);
         init();
         return view;
     }
 
     private void init() {
-        layoutPassword = view.findViewById(R.id.txtLayoutPasswordSignIn);
-        layoutConfirm = view.findViewById(R.id.txtLayoutConfirm);
-        txtConfirm = view.findViewById(R.id.txtConfirm);
+        layoutPassword = view.findViewById(R.id.txtLayoutPasswordSignUp);
         layoutEmail = view.findViewById(R.id.txtLayoutEmailSignUp);
+        layoutConfirm = view.findViewById(R.id.txtLayoutConfrimSignUp);
         txtPassword = view.findViewById(R.id.txtPasswordSignUp);
+        txtConfirm = view.findViewById(R.id.txtConfirmSignUp);
         txtSignIn = view.findViewById(R.id.txtSignIn);
         txtEmail = view.findViewById(R.id.txtEmailSignUp);
-        btnSignUp= view.findViewById(R.id.btnSignUp);
+        btnSignUp = view.findViewById(R.id.btnSignUp);
         dialog = new ProgressDialog(getContext());
         dialog.setCancelable(false);
 
-        txtSignIn.setOnClickListener(v -> {
-            //4.3 change fragments
-            getActivity().getSupportFragmentManager().beginTransaction().replace(R.id.frameAuthContainer, new SignInFragment()).commit();
+        txtSignIn.setOnClickListener(v->{
+            //4.3change fragments
+            getActivity().getSupportFragmentManager().beginTransaction().replace(R.id.frameAuthContainer,new SignInFragment()).commit();
         });
 
         //4.4 validate the fields first
-        btnSignUp.setOnClickListener(v -> {
+        btnSignUp.setOnClickListener(v->{
             if (validate()){
                 register();
             }
         });
 
-        //enable errors on invalid inputs and disable on valid inputs
+
+        //4.6enable errors on invalid inputs and disable on valid inputs
         txtEmail.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -88,7 +94,6 @@ public class SignUpFragment extends Fragment {
                 if (!txtEmail.getText().toString().isEmpty()){
                     layoutEmail.setErrorEnabled(false);
                 }
-
             }
 
             @Override
@@ -96,6 +101,7 @@ public class SignUpFragment extends Fragment {
 
             }
         });
+
         txtPassword.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -107,7 +113,6 @@ public class SignUpFragment extends Fragment {
                 if (txtPassword.getText().toString().length()>7){
                     layoutPassword.setErrorEnabled(false);
                 }
-
             }
 
             @Override
@@ -124,9 +129,10 @@ public class SignUpFragment extends Fragment {
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                 if (txtConfirm.getText().toString().equals(txtPassword.getText().toString())){
-                     layoutConfirm.setErrorEnabled(false);
-                 }
+                if (txtConfirm.getText().toString().equals(txtPassword.getText().toString())){
+                    layoutConfirm.setErrorEnabled(false);
+                }
+
             }
 
             @Override
@@ -138,10 +144,10 @@ public class SignUpFragment extends Fragment {
 
 
     //4.5 add errors
-    private boolean validate(){
+    private boolean validate (){
         if (txtEmail.getText().toString().isEmpty()){
             layoutEmail.setErrorEnabled(true);
-            layoutEmail.setError("Email is required");
+            layoutEmail.setError("Email is Required");
             return false;
         }
         if (txtPassword.getText().toString().length()<8){
@@ -154,53 +160,61 @@ public class SignUpFragment extends Fragment {
             layoutConfirm.setError("Password does not match");
             return false;
         }
+
+
         return true;
     }
 
-    //4.6
-    private void register() {
+
+    private void register(){
         dialog.setMessage("Registering");
         dialog.show();
-        StringRequest request = new StringRequest(Request.Method.POST, Constant.REGISTER, response ->{
-            //we get response if connection is successful
+        StringRequest request = new StringRequest(Request.Method.POST, Constant.REGISTER, response -> {
+            //we get response if connection success
             try {
                 JSONObject object = new JSONObject(response);
                 if (object.getBoolean("success")){
                     JSONObject user = object.getJSONObject("user");
                     //make shared preference user
-                    SharedPreferences userPref = getActivity().getApplicationContext().getSharedPreferences("user", getContext().MODE_PRIVATE);
+                    SharedPreferences userPref = getActivity().getApplicationContext().getSharedPreferences("user",getContext().MODE_PRIVATE);
                     SharedPreferences.Editor editor = userPref.edit();
-                    editor.putString("token", object.getString("token"));
-                    editor.putString("name", user.getString("name"));
-                    editor.putString("lastname", user.getString("lastname"));
-                    editor.putString("photo", user.getString("photo"));
+                    editor.putString("token",object.getString("token"));
+                    editor.putString("name",user.getString("name"));
+                    editor.putInt("id",user.getInt("id"));
+                    editor.putString("lastname",user.getString("lastname"));
+                    editor.putString("photo",user.getString("photo"));
+                    editor.putBoolean("isLoggedIn",true);
                     editor.apply();
-                    //if successful
-                    Toast.makeText(getContext(),"Register success", Toast.LENGTH_SHORT).show();
+                    //if success
+                    Toast.makeText(getContext(), "Register Success", Toast.LENGTH_SHORT).show();
                 }
             } catch (JSONException e) {
                 e.printStackTrace();
             }
             dialog.dismiss();
-        }, error -> {
-            //error displayed
+
+        },error -> {
+            // error if connection not success
             error.printStackTrace();
             dialog.dismiss();
         }){
-            //add parameters
+
+            // add parameters
+
 
             @Override
             protected Map<String, String> getParams() throws AuthFailureError {
                 HashMap<String,String> map = new HashMap<>();
-                map.put("email", txtEmail.getText().toString().trim());
-                map.put("password", txtPassword.getText().toString());
+                map.put("email",txtEmail.getText().toString().trim());
+                map.put("password",txtPassword.getText().toString());
                 return map;
             }
         };
 
-        // add this request to request queue
+        //add this request to requestqueue
         RequestQueue queue = Volley.newRequestQueue(getContext());
         queue.add(request);
     }
-    }
 
+
+}
