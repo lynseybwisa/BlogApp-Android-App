@@ -135,7 +135,7 @@ public class SignInFragment extends Fragment {
     private void login() {
         dialog.setMessage("Logging in");
         dialog.show();
-        StringRequest request = new StringRequest(Request.Method.POST, Constant.LOGIN,  response ->{
+        StringRequest request = new StringRequest(Request.Method.POST, Constant.LOGIN, response ->{
             //we get response if connection is successful
             try {
                 JSONObject object = new JSONObject(response);
